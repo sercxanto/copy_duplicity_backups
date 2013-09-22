@@ -24,7 +24,6 @@ import argparse
 import datetime
 import os
 import re
-import shutil
 import sys
 
 def get_args():
@@ -32,15 +31,12 @@ def get_args():
     parser = argparse.ArgumentParser(
             description="Returns list of last n full duplicity backups")
     parser.add_argument("directory", help="Directory to scan")
-    parser.add_argument("--nr", help="Number of full backups", default=2, type=int)
+    parser.add_argument("--nr", help="Number of full backups",
+            default=2, type=int)
 
     return parser.parse_args()
 
 
-def parse_file_name(name):
-    result = {}
-    result["timestamp"] = ""
-    result["is_full"] = False
 
 def get_duplicity_files(directory):
     '''For a given directory returns files which belong to duplicity.
@@ -57,18 +53,18 @@ def get_duplicity_files(directory):
             duplicity-new-signatures.timestamp1.to.timestamp2.sigtar.gpg
        timestamp example: 20130126T070058Z'''
 
-    def ts_regex(nr):
-        '''Returns timestamp regex, matching group with given nr, e.g.
+    def ts_regex(number):
+        '''Returns timestamp regex, matching group with given numberr, e.g.
         "timestamp1" or "timestamp2" '''
-        if nr != None:
-            return "(?P<timestamp" + str(nr) + ">\d{8}T\d{2}\d{4}[A-Z])"
+        if number != None:
+            return "(?P<timestamp" + str(number) + ">\d{8}T\d{2}\d{4}[A-Z])"
         else:
             return "(?P<timestamp>\d{8}T\d{2}\d{4}[A-Z])"
 
     def get_python_timestamp(timestamp):
         '''Returns a python timestamp for given textual duplicity timestamp'''
         time = datetime.datetime.strptime(timestamp, "%Y%m%dT%H%M%SZ")
-        return (time - datetime.datetime(1970,1,1)).total_seconds()
+        return (time - datetime.datetime(1970, 1 , 1)).total_seconds()
 
     def add_entry(dup_files, timestamp, is_full, filename):
         '''Adds an entry to the dup_files dictionnary. Raises an exception
