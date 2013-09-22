@@ -158,13 +158,14 @@ def return_last_n_full_backups(directory, nr_full):
     dup_files = get_duplicity_files(directory)
     result = []
     counter = 0
+    print dup_files
     for key in sorted(dup_files.iterkeys(), reverse=True):
-        if dup_files[key]["is_full"]:
-            counter = counter + 1
-        if counter <= nr_full:
+        if counter < nr_full:
             result = result + dup_files[key]["files"]
         else:
             break
+        if dup_files[key]["is_full"]:
+            counter = counter + 1
     return result
 
 
@@ -228,9 +229,9 @@ class TestAll(unittest.TestCase):
                 ]
         last_full = [
                 "duplicity-full.20130101T010000Z.manifest.gpg",
-                "duplicity-full.20130101T010000Z.vol1.difftar.gpg"
-                "duplicity-full.20130101T010000Z.vol2.difftar.gpg"
-                "duplicity-full-signatures.20130101T010000Z.gpg"
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg",
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg",
+                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
                 ]
         names_in = old_leftover + last_full
         self.add_files(folder, names_in)
