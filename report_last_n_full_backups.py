@@ -37,17 +37,6 @@ def get_args():
     return parser.parse_args()
 
 
-class DuplicityFileSet():
-    '''A collection of DuplicityFiles'''
-    def __init__(self):
-        self.is_full = True # True for full backup, false otherwise
-
-
-class DuplicityFile():
-    '''A single duplicity file'''
-    def __init__(self):
-        self.file_name = ""
-
 def parse_file_name(name):
     result = {}
     result["timestamp"] = ""
