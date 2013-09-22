@@ -153,6 +153,23 @@ def get_duplicity_files(directory):
         raise Exception ("spam", "eggs")
     return dup_files
 
+
+def return_last_n_full_backups(directory, nr_full):
+    '''Returns list of duplicity files last n full backups into the past'''
+    dup_files = get_duplicity_files(directory)
+    result = []
+    counter = 0
+    for key in sorted(dup_files.iterkeys(), reverse=True):
+        if dup_files[key]["is_full"]:
+            counter = counter + 1
+        if counter <= nr_full:
+            result = result + dup_files[key]["files"]
+        else:
+            break
+    return result
+
+
+
 def main():
     '''main function, called when script file is executed directly'''
     args = get_args()
@@ -160,19 +177,9 @@ def main():
         print >> sys.stderr, "Directory not found"
         sys.exit(1)
 
-    dup_files = get_duplicity_files(args.directory)
-
-    nr_full = 0
-    for key in sorted(dup_files.iterkeys(), reverse=True):
-        if dup_files[key]["is_full"]:
-            nr_full = nr_full + 1
-        if nr_full <= args.nr:
-            print dup_files[key]["files"]
-        else:
-            break
-
-
-
+    files = return_last_n_full_backups(args.directory, args.nr)
+    for file_ in sorted(files):
+        print file_
 
 if __name__ == "__main__":
     main()
