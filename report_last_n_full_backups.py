@@ -203,7 +203,7 @@ class TestAll(unittest.TestCase):
                 pass
 
     def test_01(self):
-        '''Dummy test'''
+        '''Only one full'''
         folder = self.gen_tempfolder()
         names_in = [
                 "duplicity-full.20130101T010000Z.manifest.gpg",
@@ -215,6 +215,28 @@ class TestAll(unittest.TestCase):
 
         result = return_last_n_full_backups(folder, 3)
         self.assertEqual(sorted(names_in), sorted(result))
+
+        shutil.rmtree(folder)
+    
+    def test_02(self):
+        '''One full and old incs from previous backup'''
+        folder = self.gen_tempfolder()
+        old_leftover = [
+                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
+                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
+                "duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
+                ]
+        last_full = [
+                "duplicity-full.20130101T010000Z.manifest.gpg",
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg"
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg"
+                "duplicity-full-signatures.20130101T010000Z.gpg"
+                ]
+        names_in = old_leftover + last_full
+        self.add_files(folder, names_in)
+
+        result = return_last_n_full_backups(folder, 1)
+        self.assertEqual(sorted(last_full), sorted(result))
 
         shutil.rmtree(folder)
 
