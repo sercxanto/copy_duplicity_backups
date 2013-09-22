@@ -101,7 +101,8 @@ def get_duplicity_files(directory):
     full_difftar = re.compile(full_prefix + "vol\d+\.difftar\.gpg")
     full_signatures = re.compile(
             "duplicity\-full-signatures\." + ts_regex(None) + "\.sigtar\.gpg")
-    inc_prefix = "duplicity\-inc\." + ts_regex(1) + "\.to\." + ts_regex(2) + "\."
+    inc_prefix = ("duplicity\-inc\." + ts_regex(1) + "\.to\."
+                    + ts_regex(2) + "\.")
     inc_manifest = re.compile(inc_prefix + "manifest\.gpg")
     inc_difftar = re.compile(inc_prefix + "vol\d+\.difftar\.gpg")
     inc_signatures = re.compile(
@@ -194,7 +195,7 @@ class TestAll(unittest.TestCase):
         return tempfile.mkdtemp(prefix="tmp_report_last_n")
 
     @staticmethod
-    def add_file(folder, filenames):
+    def add_files(folder, filenames):
         '''Adds an empty filename to folder '''
         for filename in filenames:
             path = os.path.join(folder, filename)
@@ -204,9 +205,16 @@ class TestAll(unittest.TestCase):
     def test_01(self):
         '''Dummy test'''
         folder = self.gen_tempfolder()
-        names = [ "duplicity-full.20130101T010000Z.manifest.gpg" ]
-        
-        self.add_file(folder, names)
+        names_in = [
+                "duplicity-full.20130101T010000Z.manifest.gpg",
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg"
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg"
+                "duplicity-full-signatures.20130101T010000Z.gpg"
+                ]
+        self.add_files(folder, names_in)
+
+        result = return_last_n_full_backups(folder, 3)
+        self.assertEqual(sorted(names_in), sorted(result))
 
         shutil.rmtree(folder)
 
