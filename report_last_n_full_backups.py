@@ -158,7 +158,6 @@ def return_last_n_full_backups(directory, nr_full):
     dup_files = get_duplicity_files(directory)
     result = []
     counter = 0
-    print dup_files
     for key in sorted(dup_files.iterkeys(), reverse=True):
         if counter < nr_full:
             result = result + dup_files[key]["files"]
@@ -238,6 +237,36 @@ class TestAll(unittest.TestCase):
 
         result = return_last_n_full_backups(folder, 1)
         self.assertEqual(sorted(last_full), sorted(result))
+
+        shutil.rmtree(folder)
+
+    def test_03(self):
+        '''Full with incs and one old inc'''
+        folder = self.gen_tempfolder()
+        old_leftover = [
+                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
+                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
+                "duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
+                ]
+        last_full = [
+                "duplicity-full.20130101T010000Z.manifest.gpg",
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg",
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg",
+                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
+                ]
+        after_full = [
+                "duplicity-inc.20130101T010000Z.to.20130102T010001Z.manifest.gpg",
+                "duplicity-inc.20130101T010000Z.to.20130102T010001Z.vol1.difftar.gpg",
+                "duplicity-new-signatures.20130101T010000Z.to.20130102T010001Z.sigtar.gpg"
+                "duplicity-inc.20130102T010001Z.to.20130103T010000Z.manifest.gpg",
+                "duplicity-inc.20130102T010001Z.to.20130103T010000Z.vol1.difftar.gpg",
+                "duplicity-new-signatures.20130102T010001Z.to.20130103T010000Z.sigtar.gpg"
+                ]
+        names_in = old_leftover + last_full + after_full
+        self.add_files(folder, names_in)
+
+        result = return_last_n_full_backups(folder, 1)
+        self.assertEqual(sorted(last_full+after_full), sorted(result))
 
         shutil.rmtree(folder)
 
