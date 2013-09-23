@@ -222,15 +222,15 @@ class TestAll(unittest.TestCase):
         '''One full and old incs from previous backup'''
         folder = self.gen_tempfolder()
         old_leftover = [
-                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
-                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
-                "duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
+"duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
+"duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
+"duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
                 ]
         last_full = [
-                "duplicity-full.20130101T010000Z.manifest.gpg",
-                "duplicity-full.20130101T010000Z.vol1.difftar.gpg",
-                "duplicity-full.20130101T010000Z.vol2.difftar.gpg",
-                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
+"duplicity-full.20130101T010000Z.manifest.gpg",
+"duplicity-full.20130101T010000Z.vol1.difftar.gpg",
+"duplicity-full.20130101T010000Z.vol2.difftar.gpg",
+"duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
                 ]
         names_in = old_leftover + last_full
         self.add_files(folder, names_in)
@@ -244,23 +244,23 @@ class TestAll(unittest.TestCase):
         '''Full with incs and one old inc'''
         folder = self.gen_tempfolder()
         old_leftover = [
-                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
-                "duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
-                "duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
+"duplicity-inc.20130101T000000Z.to.20130101T000001Z.manifest.gpg",
+"duplicity-inc.20130101T000000Z.to.20130101T000001Z.vol1.difftar.gpg",
+"duplicity-new-signatures.20130101T010000Z.to.20130101T000001Z.sigtar.gpg"
                 ]
         last_full = [
-                "duplicity-full.20130101T010000Z.manifest.gpg",
-                "duplicity-full.20130101T010000Z.vol1.difftar.gpg",
-                "duplicity-full.20130101T010000Z.vol2.difftar.gpg",
-                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
+"duplicity-full.20130101T010000Z.manifest.gpg",
+"duplicity-full.20130101T010000Z.vol1.difftar.gpg",
+"duplicity-full.20130101T010000Z.vol2.difftar.gpg",
+"duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
                 ]
         after_full = [
-                "duplicity-inc.20130101T010000Z.to.20130102T010001Z.manifest.gpg",
-                "duplicity-inc.20130101T010000Z.to.20130102T010001Z.vol1.difftar.gpg",
-                "duplicity-new-signatures.20130101T010000Z.to.20130102T010001Z.sigtar.gpg"
-                "duplicity-inc.20130102T010001Z.to.20130103T010000Z.manifest.gpg",
-                "duplicity-inc.20130102T010001Z.to.20130103T010000Z.vol1.difftar.gpg",
-                "duplicity-new-signatures.20130102T010001Z.to.20130103T010000Z.sigtar.gpg"
+"duplicity-inc.20130101T010000Z.to.20130102T010001Z.manifest.gpg",
+"duplicity-inc.20130101T010000Z.to.20130102T010001Z.vol1.difftar.gpg",
+"duplicity-new-signatures.20130101T010000Z.to.20130102T010001Z.sigtar.gpg"
+"duplicity-inc.20130102T010001Z.to.20130103T010000Z.manifest.gpg",
+"duplicity-inc.20130102T010001Z.to.20130103T010000Z.vol1.difftar.gpg",
+"duplicity-new-signatures.20130102T010001Z.to.20130103T010000Z.sigtar.gpg"
                 ]
         names_in = old_leftover + last_full + after_full
         self.add_files(folder, names_in)
