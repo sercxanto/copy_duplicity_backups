@@ -41,6 +41,11 @@ def get_args():
     return parser.parse_args()
 
 
+class UnknownFileException(Exception):
+    '''Exception when we detect a file not belonging to duplicity'''
+    pass
+
+
 def ts_regex(number):
     '''Returns timestamp regex, matching group with given numberr, e.g.
     "timestamp1" or "timestamp2" '''
@@ -96,22 +101,23 @@ def get_duplicity_files(directory):
             duplicity-new-signatures.timestamp1.to.timestamp2.sigtar.gpg
        timestamp example: 20130126T070058Z'''
 
-    full_prefix = "duplicity\-full\." + ts_regex(None) + "\."
-    full_manifest = re.compile(full_prefix + "manifest\.gpg")
-    full_difftar = re.compile(full_prefix + "vol\d+\.difftar\.gpg")
+    full_prefix = "^duplicity\-full\." + ts_regex(None) + "\."
+    full_manifest = re.compile(full_prefix + "manifest\.gpg$")
+    full_difftar = re.compile(full_prefix + "vol\d+\.difftar\.gpg$")
     full_signatures = re.compile(
-            "duplicity\-full-signatures\." + ts_regex(None) + "\.sigtar\.gpg")
-    inc_prefix = ("duplicity\-inc\." + ts_regex(1) + "\.to\."
+            "^duplicity\-full-signatures\." + ts_regex(None) + "\.sigtar\.gpg$")
+    inc_prefix = ("^duplicity\-inc\." + ts_regex(1) + "\.to\."
                     + ts_regex(2) + "\.")
-    inc_manifest = re.compile(inc_prefix + "manifest\.gpg")
-    inc_difftar = re.compile(inc_prefix + "vol\d+\.difftar\.gpg")
+    inc_manifest = re.compile(inc_prefix + "manifest\.gpg$")
+    inc_difftar = re.compile(inc_prefix + "vol\d+\.difftar\.gpg$")
     inc_signatures = re.compile(
-            "duplicity\-new\-signatures\." + ts_regex(1) + "\.to\."
-            + ts_regex(2) + "\.sigtar\.gpg" )
+            "^duplicity\-new\-signatures\." + ts_regex(1) + "\.to\."
+            + ts_regex(2) + "\.sigtar\.gpg$" )
     
     all_files = os.listdir(directory)
     dup_files = {}
     for name in all_files:
+
         result = full_manifest.match(name)
         if result != None :
             timestamp = get_unix_timestamp(result.group("timestamp"))
@@ -148,8 +154,7 @@ def get_duplicity_files(directory):
             add_entry(dup_files, timestamp, False, name)
             continue
 
-        print "not found!!! " + name
-        raise Exception ("spam", "eggs")
+        raise UnknownFileException(name)
     return dup_files
 
 
@@ -186,6 +191,61 @@ if __name__ == "__main__":
 
 
 
+class TestNameGenerator():
+    '''Helper class for tests
+    Generates names for files'''
+
+    def __init__(self):
+        self.last_timestamp_object = None
+    
+    def gen_names(self, inc_full, year, month, day, nr_vols):
+        '''Generates a list of file names for a backup run
+
+        For incremental backups the first timestamp is automatically
+        set to the last backup.
+
+        Args:
+            inc_full: Either "full" or "inc"
+            year: numerical year of backup
+            month: numerical month of backup
+            nr_vols: number of volumes
+
+        Returns:
+            list of Strings.
+            '''
+        datetime_format = "%Y%m%dT%H%M%SZ"
+        assert inc_full == "inc" or inc_full == "full" 
+
+        timestamp_object = datetime.datetime(year, month, day)
+        timestamp = timestamp_object.strftime(datetime_format)
+        manifest = ""
+        signatures = ""
+        vols = []
+
+        if inc_full == "full":
+            manifest = "duplicity-full." + timestamp + ".manifest.gpg"
+            signatures = "duplicity-full-signatures." + timestamp + ".sigtar.gpg"
+            for i in range(1, nr_vols + 1):
+                vols.append( "duplicity-full.%s.vol%d.difftar.gpg" %
+                        (timestamp, i) )
+        else:
+            last_timestamp = self.last_timestamp_object.strftime(datetime_format)
+            manifest = ( "duplicity-inc.%s.to.%s.manifest.gpg" % 
+                            ( last_timestamp, timestamp) )
+            signatures = ( "duplicity-new-signatures.%s.to.%s.sigtar.gpg" %
+                ( last_timestamp, timestamp) )
+            for i in range(1, nr_vols + 1):
+                vols.append(
+                        "duplicity-inc.%s.to.%s.vol%d.difftar.gpg" %
+                        ( last_timestamp, timestamp, i ) )
+                
+        self.last_timestamp_object = timestamp_object
+        result = vols
+        result.append(signatures)
+        result.append(manifest)
+        return result
+
+
 class TestAll(unittest.TestCase):
     '''Test of the module in general'''
 
@@ -202,17 +262,18 @@ class TestAll(unittest.TestCase):
             with open(path, mode="wb"):
                 pass
 
+
+
     def test_01(self):
         '''Only one full'''
         folder = self.gen_tempfolder()
         names_in = [
                 "duplicity-full.20130101T010000Z.manifest.gpg",
-                "duplicity-full.20130101T010000Z.vol1.difftar.gpg"
-                "duplicity-full.20130101T010000Z.vol2.difftar.gpg"
-                "duplicity-full-signatures.20130101T010000Z.gpg"
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg",
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg",
+                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
                 ]
         self.add_files(folder, names_in)
-
         result = return_last_n_full_backups(folder, 3)
         self.assertEqual(sorted(names_in), sorted(result))
 
@@ -257,7 +318,7 @@ class TestAll(unittest.TestCase):
         after_full = [
 "duplicity-inc.20130101T010000Z.to.20130102T010001Z.manifest.gpg",
 "duplicity-inc.20130101T010000Z.to.20130102T010001Z.vol1.difftar.gpg",
-"duplicity-new-signatures.20130101T010000Z.to.20130102T010001Z.sigtar.gpg"
+"duplicity-new-signatures.20130101T010000Z.to.20130102T010001Z.sigtar.gpg",
 "duplicity-inc.20130102T010001Z.to.20130103T010000Z.manifest.gpg",
 "duplicity-inc.20130102T010001Z.to.20130103T010000Z.vol1.difftar.gpg",
 "duplicity-new-signatures.20130102T010001Z.to.20130103T010000Z.sigtar.gpg"
@@ -267,6 +328,64 @@ class TestAll(unittest.TestCase):
 
         result = return_last_n_full_backups(folder, 1)
         self.assertEqual(sorted(last_full+after_full), sorted(result))
+
+        shutil.rmtree(folder)
+
+
+    def test_04(self):
+        '''3 fulls with incs, select last 2 fulls'''
+
+        gen = TestNameGenerator()
+
+        full_1 = gen.gen_names("full", 2013, 1, 1, 8)
+        incs_1 = (
+            gen.gen_names("inc", 2013, 1, 2, 1) +
+            gen.gen_names("inc", 2013, 1, 3, 1) +
+            gen.gen_names("inc", 2013, 1, 4, 2) +
+            gen.gen_names("inc", 2013, 1, 6, 1) )
+
+        full_2 = gen.gen_names("full", 2013, 1, 8, 1)
+        incs_2 = (
+            gen.gen_names("inc", 2013, 1, 9, 3) +
+            gen.gen_names("inc", 2013, 1, 10, 4) +
+            gen.gen_names("inc", 2013, 1, 11, 2) )
+
+        full_3 = gen.gen_names("full", 2013, 2, 1, 1)
+        incs_3 = (
+            gen.gen_names("inc", 2013, 2, 3, 2) +
+            gen.gen_names("inc", 2013, 2, 4, 20) )
+
+
+        names_in = full_1 + incs_1 + full_2 + incs_2 + full_3 + incs_3
+
+        folder = self.gen_tempfolder()
+        self.add_files(folder, names_in)
+
+        result = return_last_n_full_backups(folder, 2)
+        expected = full_2 + incs_2 + full_3 + incs_3
+
+        self.assertEqual(sorted(result), sorted(expected))
+
+        shutil.rmtree(folder)
+
+
+    def test_05(self):
+        '''Multi regex match'''
+        folder = self.gen_tempfolder()
+        # Multiple matches for a wrong file,
+        # "^" / "$"  in regex necessary
+        names_in = [
+                "duplicity-full.20130101T010000Z.manifest.gpg",
+                "duplicity-full.20130101T010000Z.vol1.difftar.gpg"
+                "duplicity-full.20130101T010000Z.vol2.difftar.gpg"
+                "duplicity-full-signatures.20130101T010000Z.sigtar.gpg"
+                ]
+
+        self.add_files(folder, names_in)
+
+        with self.assertRaises(UnknownFileException):
+            return_last_n_full_backups(folder, 3)
+
 
         shutil.rmtree(folder)
 
