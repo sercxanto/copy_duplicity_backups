@@ -224,12 +224,14 @@ class TestNameGenerator():
 
         if inc_full == "full":
             manifest = "duplicity-full." + timestamp + ".manifest.gpg"
-            signatures = "duplicity-full-signatures." + timestamp + ".sigtar.gpg"
+            signatures = ( "duplicity-full-signatures.%s.sigtar.gpg" %
+                (timestamp) )
             for i in range(1, nr_vols + 1):
                 vols.append( "duplicity-full.%s.vol%d.difftar.gpg" %
                         (timestamp, i) )
         else:
-            last_timestamp = self.last_timestamp_object.strftime(datetime_format)
+            last_timestamp = (
+                self.last_timestamp_object.strftime(datetime_format) )
             manifest = ( "duplicity-inc.%s.to.%s.manifest.gpg" % 
                             ( last_timestamp, timestamp) )
             signatures = ( "duplicity-new-signatures.%s.to.%s.sigtar.gpg" %
