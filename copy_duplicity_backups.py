@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # vim: set fileencoding=utf-8 :
-""" report_last_n_full_backups.py
+""" copy_duplicity_backups.py
    
-    Returns list of last n full duplicity backups"""
+    Copies files of last n full duplicity backups"""
 #
 #   Copyright (C) 2013 Georg Lutz <georg AT NOSPAM georglutz DOT de>
 #
@@ -254,7 +254,7 @@ class TestAll(unittest.TestCase):
     @staticmethod
     def gen_tempfolder():
         '''Returns temporary folder name'''
-        return tempfile.mkdtemp(prefix="tmp_report_last_n")
+        return tempfile.mkdtemp(prefix="tmp_copy_duplicity_backups")
 
     @staticmethod
     def add_files(folder, filenames):
