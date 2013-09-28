@@ -34,6 +34,7 @@ import tempfile
 # Module to test
 import copy_duplicity_backups
 
+
 class TestNameGenerator():
     '''Helper class for tests
     Generates names for files'''
@@ -91,13 +92,14 @@ class TestNameGenerator():
         return result
 
 
-class TestAll(unittest.TestCase):
-    '''Test of the module in general'''
+class TestReturnBackups(unittest.TestCase):
+    '''Test for return_last_n_full_backups'''
 
     @staticmethod
     def gen_tempfolder():
         '''Returns temporary folder name'''
-        return tempfile.mkdtemp(prefix="tmp_copy_duplicity_backups")
+        return tempfile.mkdtemp(
+                prefix="tmp_copy_duplicity_backups_return_backups")
 
     @staticmethod
     def add_files(folder, filenames):
@@ -231,6 +233,112 @@ class TestAll(unittest.TestCase):
         with self.assertRaises(copy_duplicity_backups.UnknownFileException):
             copy_duplicity_backups.return_last_n_full_backups(folder, 3)
 
+        shutil.rmtree(folder)
+
+
+
+
+class TestSyncFiles(unittest.TestCase):
+    '''Test for sync_files'''
+
+    @staticmethod
+    def gen_tempfolder():
+        '''Returns temporary folder name'''
+        return tempfile.mkdtemp(prefix="tmp_copy_duplicity_backups_sync_files")
+
+    def test_01(self):
+        '''Empty folders, empty list'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        self.assertEqual(len(os.listdir(dst_dir)), 0)
+
+        shutil.rmtree(folder)
+
+    def test_02(self):
+        '''Empty source folder, file present in dst, list empty'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
+            pass
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        self.assertEqual(len(os.listdir(dst_dir)), 0)
+
+        shutil.rmtree(folder)
+
+    def test_03(self):
+        '''Same file in source and destination, list empty'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        with open(os.path.join(src_dir, "empty_file"), mode="wb"):
+            pass
+        with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
+            pass
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        self.assertEqual(len(os.listdir(dst_dir)), 0)
+
+        shutil.rmtree(folder)
+
+    def test_04(self):
+        '''Same file in source, destination and list'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        with open(os.path.join(src_dir, "empty_file"), mode="wb"):
+            pass
+        with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
+            pass
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file"])
+        dst_files = os.listdir(dst_dir)
+        self.assertEqual(len(dst_files), 1)
+        self.assertIn("empty_file", dst_files)
+
+        shutil.rmtree(folder)
+
+    def test_05(self):
+        '''Same two files in source and destination, list only one file'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        with open(os.path.join(src_dir, "empty_file1"), mode="wb"):
+            pass
+        with open(os.path.join(src_dir, "empty_file2"), mode="wb"):
+            pass
+        with open(os.path.join(dst_dir, "empty_file1"), mode="wb"):
+            pass
+        with open(os.path.join(dst_dir, "empty_file2"), mode="wb"):
+            pass
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file1"])
+        dst_files = os.listdir(dst_dir)
+        self.assertEqual(len(dst_files), 1)
+        self.assertIn("empty_file1", dst_files)
 
         shutil.rmtree(folder)
 

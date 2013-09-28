@@ -31,6 +31,7 @@ import argparse
 import datetime
 import os
 import re
+import shutil
 import sys
 
 
@@ -163,7 +164,15 @@ def get_duplicity_files(directory):
 
 
 def return_last_n_full_backups(directory, nr_full):
-    '''Returns list of duplicity files last n full backups into the past'''
+    '''Returns list of duplicity files for last n full backups into the past
+
+    Args:
+        directory: Directory with duplicity backup files
+        nr_full: Number of full backups
+
+    Returns:
+        list of files without directory prefixed
+    '''
     dup_files = get_duplicity_files(directory)
     result = []
     counter = 0
@@ -176,6 +185,48 @@ def return_last_n_full_backups(directory, nr_full):
             counter = counter + 1
     return result
 
+
+def sync_files(src_dir, dst_dir, files):
+    '''Actually copies the files
+
+    The files are copied if they are not existent in dst_dir or if
+    the size differs.
+
+    Any existing files in dst_dir not available in files list are deleted!
+
+    Args:
+        src_dir: Source directory, where to copy from
+        dst_dir: Destination directory, where to copy to
+        files: List of filenames without path
+    '''
+
+    files_to_delete = []
+    files_to_copy = []
+
+    dst_files = os.listdir(dst_dir)
+
+    for dst_file in dst_files:
+        if dst_file in files:
+            dst_size = os.path.getsize(os.path.join(dst_dir, dst_file))
+            src_size = os.path.getsize(os.path.join(src_dir, dst_file))
+            if dst_size != src_size:
+                files_to_delete.append(dst_file)
+                files_to_copy.append(dst_file)
+        else:
+            files_to_delete.append(dst_file)
+
+    for file_ in files:
+        if not file_ in dst_files:
+            files_to_copy.append(file_)
+
+    for file_ in files_to_delete:
+        dst_file = os.path.join(dst_dir, file_)
+        os.unlink(dst_file)
+
+    for file_ in files_to_copy:
+        src_file = os.path.join(src_dir, file_)
+        dst_file = os.path.join(dst_dir, file_)
+        shutil.copyfile(src_file, dst_file)
 
 
 def main():
