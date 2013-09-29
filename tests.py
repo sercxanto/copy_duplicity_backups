@@ -342,3 +342,38 @@ class TestSyncFiles(unittest.TestCase):
 
         shutil.rmtree(folder)
 
+    def test_06(self):
+        '''Same two files in source and destination, both in list,
+        one differs in size'''
+        
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        with open(os.path.join(src_dir, "nonempty_file"), mode="wb") as file_:
+            file_.write("new content")
+        with open(os.path.join(src_dir, "empty_file"), mode="wb"):
+            pass
+        with open(os.path.join(dst_dir, "nonempty_file"), mode="wb") as file_:
+            file_.write("old content, old size")
+        with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
+            pass
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir,
+                ["nonempty_file", "empty_file"])
+        dst_files = os.listdir(dst_dir)
+        self.assertEqual(len(dst_files), 2)
+        self.assertIn("nonempty_file", dst_files)
+        self.assertIn("empty_file", dst_files)
+        self.assertEqual(
+                os.path.getsize(os.path.join(src_dir, "nonempty_file")),
+                os.path.getsize(os.path.join(dst_dir, "nonempty_file")))
+        self.assertEqual(
+                os.path.getsize(os.path.join(src_dir, "empty_file")),
+                os.path.getsize(os.path.join(dst_dir, "empty_file")))
+
+        shutil.rmtree(folder)
+
