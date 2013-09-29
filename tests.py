@@ -26,7 +26,9 @@
 
 # Standard library imports
 import datetime
+import filecmp
 import os
+import random
 import shutil
 import unittest
 import tempfile
@@ -236,6 +238,60 @@ class TestReturnBackups(unittest.TestCase):
         shutil.rmtree(folder)
 
 
+def gen_random_files(rnd, folder, nr_files):
+    '''Generates a number of files with random name and content
+
+    The file length is equaly distributed between 1 and 10000 bytes.
+    The names are numbered testfile_0000, testfile_0001 etc.
+    A random object has to be provided. Seed it before to create reproducable
+    tests (at leat between different runs).
+
+    Args:
+        rnd: Random object from standard library.
+        folder: The folder where to create the random files
+        nr_files: The number of files to create
+    Return:
+        List of filenames without folder name prefixed
+    '''
+    result = []
+
+    for i in range(nr_files):
+        filename = "test_%04d" % (i)
+        result.append(filename)
+        size = rnd.randint(1, 10000)
+        with open(os.path.join(folder, filename), mode="wb") as file_:
+            j = 0
+            while j < size:
+                file_.write(chr(rnd.randint(0, 255)))
+                j = j + 1
+    return result
+
+
+def cmp_src_dst_files(src_dir, dst_dir, filelist):
+    '''Checks if files in filelist are available at dst_dir
+    and are equal to src_dir
+
+    Args:
+        src_dir: Source directory
+        dst_dir: Destination directory
+        filelist: List of files to be compared
+
+    Returns:
+        True if dst_dir contains only files in filelist and if the file content
+        is equal to thise in src_dir. Otherwise false.'''
+
+    dst_files = sorted(os.listdir(dst_dir))
+
+    if dst_files != sorted(filelist):
+        return False
+
+    for file_ in filelist:
+        src_file = os.path.join(src_dir, file_)
+        dst_file = os.path.join(dst_dir, file_)
+        if not filecmp.cmp(src_file, dst_file, shallow=False):
+            return False
+
+    return True
 
 
 class TestSyncFiles(unittest.TestCase):
@@ -375,5 +431,29 @@ class TestSyncFiles(unittest.TestCase):
                 os.path.getsize(os.path.join(src_dir, "empty_file")),
                 os.path.getsize(os.path.join(dst_dir, "empty_file")))
 
+        shutil.rmtree(folder)
+
+
+    def test_07(self):
+        '''Random files, some files available at destination'''
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        rnd = random.Random()
+        rnd.seed(28373332)
+        src_files = gen_random_files(rnd, src_dir, 50)
+        files_to_sync = src_files[-30:]
+        for file_ in files_to_sync[:10]:
+            shutil.copyfile(
+                    os.path.join(src_dir, file_),
+                    os.path.join(dst_dir, file_))
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync)
+
+        self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
         shutil.rmtree(folder)
 
