@@ -52,7 +52,7 @@ class UnknownFileException(Exception):
 
 
 def ts_regex(number):
-    '''Returns timestamp regex, matching group with given numberr, e.g.
+    '''Returns timestamp regex, matching group with given number, e.g.
     "timestamp1" or "timestamp2" '''
     if number != None:
         return "(?P<timestamp" + str(number) + ">\d{8}T\d{2}\d{4}[A-Z])"

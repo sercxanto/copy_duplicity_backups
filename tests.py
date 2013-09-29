@@ -457,3 +457,38 @@ class TestSyncFiles(unittest.TestCase):
         self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
         shutil.rmtree(folder)
 
+
+    def test_08(self):
+        '''Random files, simulate partly transferred files'''
+
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        rnd = random.Random()
+        rnd.seed(332093199)
+        src_files = gen_random_files(rnd, src_dir, 50)
+        files_to_sync = src_files[-30:]
+        for file_ in files_to_sync:
+            shutil.copyfile(
+                    os.path.join(src_dir, file_),
+                    os.path.join(dst_dir, file_))
+
+        files_to_truncate = []
+        files_to_truncate.append(os.path.join(dst_dir, files_to_sync[-1]))
+        files_to_truncate.append(os.path.join(dst_dir, files_to_sync[-2]))
+        files_to_truncate.append(os.path.join(dst_dir, files_to_sync[-3]))
+
+        for entry in files_to_truncate:
+            with open(entry, mode="ra+") as file_:
+                new_size = os.path.getsize(entry)
+                file_.truncate(new_size)
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync)
+
+        self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
+        shutil.rmtree(folder)
+
