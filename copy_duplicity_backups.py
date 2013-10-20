@@ -38,9 +38,13 @@ import sys
 def get_args():
     '''Configures command line parser and returns parsed parameters'''
     parser = argparse.ArgumentParser(
-            description="Returns list of last n full duplicity backups")
-    parser.add_argument("directory", help="Directory to scan")
-    parser.add_argument("--nr", help="Number of full backups",
+            description="Copies duplicity backup files")
+    parser.add_argument("src", help="Source directory")
+    parser.add_argument("dst", help="Destination directory")
+    parser.add_argument("--dryrun",
+            action="store_true",
+            help="Do not write/delete files. Just print out.")
+    parser.add_argument("--nr", help="Number of full backups (default is 2)",
             default=2, type=int)
 
     return parser.parse_args()
@@ -186,7 +190,7 @@ def return_last_n_full_backups(directory, nr_full):
     return result
 
 
-def sync_files(src_dir, dst_dir, files):
+def sync_files(src_dir, dst_dir, files, dryrun):
     '''Actually copies the files
 
     The files are copied if they are not existent in dst_dir or if
@@ -198,6 +202,7 @@ def sync_files(src_dir, dst_dir, files):
         src_dir: Source directory, where to copy from
         dst_dir: Destination directory, where to copy to
         files: List of filenames without path
+        dryrun: If true only simulate and print out message
     '''
 
     files_to_delete = []
@@ -221,25 +226,33 @@ def sync_files(src_dir, dst_dir, files):
 
     for file_ in files_to_delete:
         dst_file = os.path.join(dst_dir, file_)
-        os.unlink(dst_file)
+        if dryrun:
+            print "Would delete " + dst_file
+        else:
+            print "Delete " + dst_file
+            os.unlink(dst_file)
 
     for file_ in files_to_copy:
         src_file = os.path.join(src_dir, file_)
         dst_file = os.path.join(dst_dir, file_)
-        shutil.copyfile(src_file, dst_file)
-
+        if dryrun:
+            print "Would copy " + src_file + " to " + dst_file
+        else:
+            print "Copy " + src_file + " to " + dst_file
+            shutil.copyfile(src_file, dst_file)
 
 def main():
     '''main function, called when script file is executed directly'''
     args = get_args()
-    if not os.path.isdir(args.directory):
-        print >> sys.stderr, "Directory not found"
+    if not os.path.isdir(args.src):
+        print >> sys.stderr, "Directory \"" + args.src + "\" not found"
+        sys.exit(1)
+    if not os.path.isdir(args.dst):
+        print >> sys.stderr, "Directory \"" + args.src + "\" not found"
         sys.exit(1)
 
-    files = return_last_n_full_backups(args.directory, args.nr)
-    for file_ in sorted(files):
-        print file_
-
+    files = return_last_n_full_backups(args.src, args.nr)
+    sync_files(args.src, args.dst, files, args.dryrun)
 
 if __name__ == "__main__":
     main()

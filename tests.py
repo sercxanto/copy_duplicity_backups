@@ -311,7 +311,7 @@ class TestSyncFiles(unittest.TestCase):
         os.makedirs(src_dir)
         os.makedirs(dst_dir)
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -328,7 +328,7 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -347,7 +347,7 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [])
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -366,7 +366,8 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file"])
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file"],
+                False)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 1)
         self.assertIn("empty_file", dst_files)
@@ -391,7 +392,8 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file2"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file1"])
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file1"],
+                False)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 1)
         self.assertIn("empty_file1", dst_files)
@@ -419,7 +421,7 @@ class TestSyncFiles(unittest.TestCase):
             pass
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir,
-                ["nonempty_file", "empty_file"])
+                ["nonempty_file", "empty_file"], False)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 2)
         self.assertIn("nonempty_file", dst_files)
@@ -452,7 +454,8 @@ class TestSyncFiles(unittest.TestCase):
                     os.path.join(src_dir, file_),
                     os.path.join(dst_dir, file_))
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync)
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync,
+                False)
 
         self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
         shutil.rmtree(folder)
@@ -487,7 +490,8 @@ class TestSyncFiles(unittest.TestCase):
                 new_size = os.path.getsize(entry)
                 file_.truncate(new_size)
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync)
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync,
+                False)
 
         self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
         shutil.rmtree(folder)
