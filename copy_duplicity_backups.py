@@ -46,7 +46,8 @@ def get_args():
             action="store_true",
             help="Do not write/delete files. Just print out.")
     parser.add_argument("--maxsize",
-            help="Stop copying when dst folder has given size in MB. Default is 0 (unlimited)",
+            help="Stop copying when dst folder has given size in MB. Default is\
+ 0 (unlimited)",
             default=0, type=int)
     parser.add_argument("--nr", help="Number of full backups (default is 2)",
             default=2, type=int)
@@ -211,6 +212,8 @@ def sync_files(src_dir, dst_dir, files, dryrun, max_size):
         dryrun: If true only simulate and print out message
         max_size: stop with error if dst_dir contains more than max_size bytes.
         If max_size is 0 no limit is enforced.
+    Returns:
+        1 in case of any error, otherwise 0
     '''
 
     files_to_delete = []
@@ -251,13 +254,14 @@ def sync_files(src_dir, dst_dir, files, dryrun, max_size):
             print >> sys.stderr, "Stopping at " + src_file + " ."
             print >> sys.stderr, (
                     "Exceeds file size limit of %d bytes." % (max_size))
-            return
+            return 1
         current_size += file_size
         if dryrun:
             print "Would copy " + src_file + " to " + dst_file
         else:
             logging.info("Copy " + src_file + " to " + dst_file)
             shutil.copyfile(src_file, dst_file)
+    return 0
 
 
 def main():
@@ -278,7 +282,8 @@ def main():
 
     files = return_last_n_full_backups(args.src, args.nr)
     max_size = args.maxsize * 1000000
-    sync_files(args.src, args.dst, files, args.dryrun, max_size)
+    return_code = sync_files(args.src, args.dst, files, args.dryrun, max_size)
+    sys.exit(return_code)
 
 if __name__ == "__main__":
     main()
