@@ -29,6 +29,7 @@
 # Standard library imports:
 import argparse
 import datetime
+import logging
 import os
 import re
 import shutil
@@ -46,6 +47,8 @@ def get_args():
             help="Do not write/delete files. Just print out.")
     parser.add_argument("--nr", help="Number of full backups (default is 2)",
             default=2, type=int)
+    parser.add_argument("--quiet", help="If set only errors are printed out",
+            action="store_true")
 
     return parser.parse_args()
 
@@ -229,7 +232,7 @@ def sync_files(src_dir, dst_dir, files, dryrun):
         if dryrun:
             print "Would delete " + dst_file
         else:
-            print "Delete " + dst_file
+            logging.info("Delete " + dst_file)
             os.unlink(dst_file)
 
     for file_ in files_to_copy:
@@ -238,12 +241,18 @@ def sync_files(src_dir, dst_dir, files, dryrun):
         if dryrun:
             print "Would copy " + src_file + " to " + dst_file
         else:
-            print "Copy " + src_file + " to " + dst_file
+            logging.info("Copy " + src_file + " to " + dst_file)
             shutil.copyfile(src_file, dst_file)
 
 def main():
     '''main function, called when script file is executed directly'''
     args = get_args()
+
+    if args.quiet:
+        logging.basicConfig(format="%(message)s", level=logging.WARNING)
+    else:
+        logging.basicConfig(format="%(message)s", level=logging.INFO)
+
     if not os.path.isdir(args.src):
         print >> sys.stderr, "Directory \"" + args.src + "\" not found"
         sys.exit(1)
