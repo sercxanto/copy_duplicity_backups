@@ -267,6 +267,23 @@ def gen_random_files(rnd, folder, nr_files):
     return result
 
 
+def gen_dummy_file(file_path, nr_bytes):
+    '''Write nr_bytes dummy data to file.
+    
+    An existing file will be overwritten.
+    
+    Args:
+        file_path: Complete path to the file (folder + file name).
+        nr_bytes: Number of bytes write to that files.
+        
+    Return:
+        This function does not return anything.'''
+
+    with open(file_path, mode="wb") as file_:
+        for i in range(0, nr_bytes):
+            file_.write(chr(i % 255))
+
+
 def cmp_src_dst_files(src_dir, dst_dir, filelist):
     '''Checks if files in filelist are available at dst_dir
     and are equal to src_dir
@@ -311,7 +328,7 @@ class TestSyncFiles(unittest.TestCase):
         os.makedirs(src_dir)
         os.makedirs(dst_dir)
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False, 0)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -328,7 +345,7 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False, 0)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -347,7 +364,7 @@ class TestSyncFiles(unittest.TestCase):
         with open(os.path.join(dst_dir, "empty_file"), mode="wb"):
             pass
 
-        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False)
+        copy_duplicity_backups.sync_files(src_dir, dst_dir, [], False, 0)
         self.assertEqual(len(os.listdir(dst_dir)), 0)
 
         shutil.rmtree(folder)
@@ -367,7 +384,7 @@ class TestSyncFiles(unittest.TestCase):
             pass
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file"],
-                False)
+                False, 0)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 1)
         self.assertIn("empty_file", dst_files)
@@ -393,7 +410,7 @@ class TestSyncFiles(unittest.TestCase):
             pass
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir, ["empty_file1"],
-                False)
+                False, 0)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 1)
         self.assertIn("empty_file1", dst_files)
@@ -421,7 +438,7 @@ class TestSyncFiles(unittest.TestCase):
             pass
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir,
-                ["nonempty_file", "empty_file"], False)
+                ["nonempty_file", "empty_file"], False, 0)
         dst_files = os.listdir(dst_dir)
         self.assertEqual(len(dst_files), 2)
         self.assertIn("nonempty_file", dst_files)
@@ -455,7 +472,7 @@ class TestSyncFiles(unittest.TestCase):
                     os.path.join(dst_dir, file_))
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync,
-                False)
+                False, 0)
 
         self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
         shutil.rmtree(folder)
@@ -491,8 +508,38 @@ class TestSyncFiles(unittest.TestCase):
                 file_.truncate(new_size)
 
         copy_duplicity_backups.sync_files(src_dir, dst_dir, files_to_sync,
-                False)
+                False, 0)
 
         self.assertTrue(cmp_src_dst_files(src_dir, dst_dir, files_to_sync))
+        shutil.rmtree(folder)
+
+
+    def test_09(self):
+        '''File size limit'''
+
+        folder = self.gen_tempfolder()
+
+        src_dir = os.path.join(folder, "src")
+        dst_dir = os.path.join(folder, "dst")
+        os.makedirs(src_dir)
+        os.makedirs(dst_dir)
+
+        gen_dummy_file(os.path.join(src_dir, "file1"), 20)
+        gen_dummy_file(os.path.join(src_dir, "file2"), 30)
+        gen_dummy_file(os.path.join(src_dir, "file3"), 20)
+
+        max_size = 60
+
+        copy_duplicity_backups.sync_files(src_dir, dst_dir,
+                ["file1", "file2", "file3"],
+                False, max_size)
+        dst_files = os.listdir(dst_dir)
+        
+        self.assertEqual(len(dst_files), 2)
+        dst_size = 0
+        for file_ in dst_files:
+            dst_size = dst_size + os.path.getsize(os.path.join(dst_dir, file_))
+        self.assertTrue(dst_size <= max_size)
+        
         shutil.rmtree(folder)
 
