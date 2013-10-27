@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8 :
 """ copy_duplicity_backups.py
    
-    Copies files of last n full duplicity backups"""
+    Copies most recent duplicity backup files"""
 
 # The MIT License (MIT)
 #
@@ -39,7 +39,7 @@ import sys
 def get_args():
     '''Configures command line parser and returns parsed parameters'''
     parser = argparse.ArgumentParser(
-            description="Copies duplicity backup files")
+            description="Copies most recent duplicity backup files")
     parser.add_argument("src", help="Source directory")
     parser.add_argument("dst", help="Destination directory")
     parser.add_argument("--dryrun",
